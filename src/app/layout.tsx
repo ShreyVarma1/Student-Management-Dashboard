@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
+
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
+
 import Header from "../components/header/header";
-import Sidebar from "..//components/sidebar/sidebar";
+import Sidebar from "../components/sidebar/sidebar";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Student Management Dashboard",
-  description: "Student management dashboard built with Next.js",
+  description: "Student Management Dashboard",
 };
 
 export default function RootLayout({
@@ -16,18 +20,21 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Header />
-        <Sidebar />
+        <AppRouterCacheProvider>
+          <Header />
 
-        <main
-          style={{
-            marginLeft: "240px",
-            paddingTop: "64px",
-            minHeight: "100vh",
-          }}
-        >
-          {children}
-        </main>
+          <Sidebar />
+
+          <main
+            style={{
+              marginLeft: "240px",
+              paddingTop: "64px",
+              minHeight: "100vh",
+            }}
+          >
+            {children}
+          </main>
+        </AppRouterCacheProvider>
       </body>
     </html>
   );
