@@ -1,4 +1,7 @@
-export type StudentStatus = "Active" | "Completed" | "Inactive";
+export type StudentStatus =
+  | "Active"
+  | "Completed"
+  | "Inactive";
 
 export interface Student {
   id: number;
@@ -23,3 +26,16 @@ export interface Student {
 }
 
 export type StudentInput = Omit<Student, "id">;
+
+export type ScoreRange =
+  | ""
+  | "0-50"
+  | "51-75"
+  | "76-100";
+
+export interface StudentFilters {
+  search: string;
+  course: string;
+  status: StudentStatus | "";
+  scoreRange: ScoreRange;
+}
