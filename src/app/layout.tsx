@@ -1,17 +1,23 @@
 import type { Metadata } from "next";
 
-import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import "./globals.css";
 
 import Header from "../components/header/header";
-import Sidebar from "../components/sidebar/sidebar";
 
-import "./globals.css";
+import {
+  AppProvider,
+} from "../context/context";
+
+import {
+  ToastContainer,
+} from "react-toastify";
+
+import "react-toastify/dist/ReactToastify.css";
 
 export const metadata: Metadata = {
   title: "Student Management Dashboard",
-  description: "Student Management Dashboard",
+  description:
+    "Student Management Dashboard",
 };
 
 export default function RootLayout({
@@ -22,25 +28,23 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AppRouterCacheProvider>
+        <AppProvider>
           <Header />
-
-          <Sidebar />
-          
-          <ToastContainer
-           position="top-right"
-           autoClose={3000}/>
 
           <main
             style={{
-              marginLeft: "240px",
-              paddingTop: "64px",
+              paddingTop: "80px",
               minHeight: "100vh",
             }}
           >
             {children}
           </main>
-        </AppRouterCacheProvider>
+
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+          />
+        </AppProvider>
       </body>
     </html>
   );

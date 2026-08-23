@@ -1,27 +1,47 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  useParams,
+  useRouter,
+} from "next/navigation";
 
 import {
   Alert,
   Box,
   Button,
+  Card,
+  CardContent,
+  Chip,
   CircularProgress,
-  Paper,
+  LinearProgress,
+  Stack,
   Typography,
 } from "@mui/material";
 
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import EditIcon from "@mui/icons-material/Edit";
+import EditIcon from
+  "@mui/icons-material/Edit";
 
-import type { Student } from "../../../types/students";
+import ArrowBackIcon from
+  "@mui/icons-material/ArrowBack";
 
-import { studentService } from "../../../services/students_services";
+import {
+  studentService,
+} from "../../../services/students_services";
+
+import type {
+  Student,
+} from "../../../types/students";
 
 export default function StudentDetailsPage() {
   const params = useParams();
   const router = useRouter();
+
+  const id = Number(params.id);
 
   const [student, setStudent] =
     useState<Student | null>(null);
@@ -29,27 +49,53 @@ export default function StudentDetailsPage() {
   const [loading, setLoading] =
     useState(true);
 
+  const [error, setError] =
+    useState("");
+
   useEffect(() => {
     const loadStudent = async () => {
-      const id = Number(params.id);
+      try {
+        setLoading(true);
+        setError("");
 
-      const data =
-        await studentService.getStudentById(id);
+        const data =
+          await studentService.getStudentById(
+            id
+          );
 
-      setStudent(data ?? null);
-      setLoading(false);
+        if (!data) {
+          setError(
+            "Student not found."
+          );
+          return;
+        }
+
+        setStudent(data);
+      } catch {
+        setError(
+          "Unable to load student details."
+        );
+      } finally {
+        setLoading(false);
+      }
     };
 
-    loadStudent();
-  }, [params.id]);
+    if (!Number.isNaN(id)) {
+      loadStudent();
+    } else {
+      setError("Invalid student ID.");
+      setLoading(false);
+    }
+  }, [id]);
 
   if (loading) {
     return (
       <Box
         sx={{
+          minHeight: 300,
           display: "flex",
+          alignItems: "center",
           justifyContent: "center",
-          padding: 5,
         }}
       >
         <CircularProgress />
@@ -57,19 +103,21 @@ export default function StudentDetailsPage() {
     );
   }
 
-  if (!student) {
+  if (error) {
     return (
-      <Box sx={{ padding: 3 }}>
+      <Box sx={{ padding: 4 }}>
         <Alert severity="error">
-          Student not found.
+          {error}
         </Alert>
 
         <Button
-          startIcon={<ArrowBackIcon />}
+          sx={{ marginTop: 2 }}
+          startIcon={
+            <ArrowBackIcon />
+          }
           onClick={() =>
             router.push("/students")
           }
-          sx={{ marginTop: 2 }}
         >
           Back to Students
         </Button>
@@ -77,231 +125,306 @@ export default function StudentDetailsPage() {
     );
   }
 
+  if (!student) {
+    return null;
+  }
+
   return (
-    <Box sx={{ padding: 3 }}>
+    <Box
+      sx={{
+        padding: {
+          xs: 2,
+          sm: 3,
+          md: 4,
+        },
+        maxWidth: 1200,
+        margin: "0 auto",
+      }}
+    >
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          justifyContent:
+            "space-between",
+          alignItems: {
+            xs: "flex-start",
+            sm: "center",
+          },
+          flexDirection: {
+            xs: "column",
+            sm: "row",
+          },
+          gap: 2,
           marginBottom: 3,
         }}
       >
         <Box>
-          <Typography variant="h4">
+          <Typography
+            variant="h4"
+            sx={{ fontWeight: 700 }}
+          >
+            Student Details
+          </Typography>
+
+          <Typography
+            color="text.secondary"
+            sx={{ fontWeight: 400 }}
+          >
+            View complete student information
+          </Typography>
+        </Box>
+
+        <Stack
+          direction="row"
+          spacing={1}
+        >
+          <Button
+            variant="outlined"
+            startIcon={
+              <ArrowBackIcon />
+            }
+            onClick={() =>
+              router.push("/students")
+            }
+          >
+            Back
+          </Button>
+
+          <Button
+            variant="contained"
+            startIcon={
+              <EditIcon />
+            }
+            onClick={() =>
+              router.push(
+                `/students/${student.id}/edit`
+              )
+            }
+          >
+            Edit
+          </Button>
+        </Stack>
+      </Box>
+
+      <Card sx={{ marginBottom: 3 }}>
+        <CardContent>
+          <Typography
+            variant="h5"
+            gutterBottom
+            sx={{ fontWeight: 700 }}
+          >
             {student.firstName}{" "}
             {student.lastName}
           </Typography>
 
-          <Typography variant="body2">
-            Student Details
+          <Chip
+            label={student.status}
+            color={
+              student.status === "Active"
+                ? "success"
+                : student.status ===
+                  "Completed"
+                ? "primary"
+                : "default"
+            }
+            sx={{
+              marginBottom: 3,
+            }}
+          />
+
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "1fr 1fr",
+              },
+              gap: 3,
+            }}
+          >
+            <Box>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                Email
+              </Typography>
+
+              <Typography>
+                {student.email}
+              </Typography>
+            </Box>
+
+            <Box>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                Phone
+              </Typography>
+
+              <Typography>
+                {student.phone}
+              </Typography>
+            </Box>
+
+            <Box>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                Date of Birth
+              </Typography>
+
+              <Typography>
+                {student.dateOfBirth}
+              </Typography>
+            </Box>
+
+            <Box>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                Course
+              </Typography>
+
+              <Typography>
+                {student.course}
+              </Typography>
+            </Box>
+
+            <Box>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                Batch
+              </Typography>
+
+              <Typography>
+                {student.batch}
+              </Typography>
+            </Box>
+
+            <Box>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                Trainer
+              </Typography>
+
+              <Typography>
+                {student.trainer}
+              </Typography>
+            </Box>
+
+            <Box>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                Start Date
+              </Typography>
+
+              <Typography>
+                {student.startDate}
+              </Typography>
+            </Box>
+
+            <Box>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                Experience
+              </Typography>
+
+              <Typography>
+                {student.experience} years
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 700 }}
+            gutterBottom
+          >
+            Academic Progress
           </Typography>
-        </Box>
 
-        <Button
-          variant="contained"
-          startIcon={<EditIcon />}
-          onClick={() =>
-            router.push(
-              `/students/${student.id}/edit`
-            )
-          }
-        >
-          Edit Student
-        </Button>
-      </Box>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              marginBottom: 1,
+            }}
+          >
+            Score: {student.score}%
+          </Typography>
 
-      <Paper sx={{ padding: 3 }}>
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              md: "1fr 1fr",
-            },
-            gap: 3,
-          }}
-        >
-          <Box>
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-            >
-              First Name
-            </Typography>
+          <LinearProgress
+            variant="determinate"
+            value={student.score}
+            sx={{
+              height: 10,
+              borderRadius: 5,
+              marginBottom: 3,
+            }}
+          />
 
-            <Typography>
-              {student.firstName}
-            </Typography>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "1fr 1fr",
+              },
+              gap: 2,
+            }}
+          >
+            <Box>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                Score
+              </Typography>
+
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700 }}
+              >
+                {student.score}%
+              </Typography>
+            </Box>
+
+            <Box>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                Pending Assignments
+              </Typography>
+
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700 }}
+              >
+                {
+                  student.pendingAssignments
+                }
+              </Typography>
+            </Box>
           </Box>
-
-          <Box>
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-            >
-              Last Name
-            </Typography>
-
-            <Typography>
-              {student.lastName}
-            </Typography>
-          </Box>
-
-          <Box>
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-            >
-              Email
-            </Typography>
-
-            <Typography>
-              {student.email}
-            </Typography>
-          </Box>
-
-          <Box>
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-            >
-              Phone
-            </Typography>
-
-            <Typography>
-              {student.phone}
-            </Typography>
-          </Box>
-
-          <Box>
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-            >
-              Date of Birth
-            </Typography>
-
-            <Typography>
-              {student.dateOfBirth}
-            </Typography>
-          </Box>
-
-          <Box>
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-            >
-              Course
-            </Typography>
-
-            <Typography>
-              {student.course}
-            </Typography>
-          </Box>
-
-          <Box>
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-            >
-              Batch
-            </Typography>
-
-            <Typography>
-              {student.batch}
-            </Typography>
-          </Box>
-
-          <Box>
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-            >
-              Start Date
-            </Typography>
-
-            <Typography>
-              {student.startDate}
-            </Typography>
-          </Box>
-
-          <Box>
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-            >
-              Trainer
-            </Typography>
-
-            <Typography>
-              {student.trainer}
-            </Typography>
-          </Box>
-
-          <Box>
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-            >
-              Experience
-            </Typography>
-
-            <Typography>
-              {student.experience} years
-            </Typography>
-          </Box>
-
-          <Box>
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-            >
-              Status
-            </Typography>
-
-            <Typography>
-              {student.status}
-            </Typography>
-          </Box>
-
-          <Box>
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-            >
-              Score
-            </Typography>
-
-            <Typography>
-              {student.score}
-            </Typography>
-          </Box>
-
-          <Box>
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-            >
-              Pending Assignments
-            </Typography>
-
-            <Typography>
-              {student.pendingAssignments}
-            </Typography>
-          </Box>
-        </Box>
-
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() =>
-            router.push("/students")
-          }
-          sx={{ marginTop: 4 }}
-        >
-          Back to Students
-        </Button>
-      </Paper>
+        </CardContent>
+      </Card>
     </Box>
   );
 }
