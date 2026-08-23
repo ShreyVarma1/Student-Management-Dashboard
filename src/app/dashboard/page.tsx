@@ -1,73 +1,138 @@
 "use client";
-import { Box, Typography, Grid, Card, CardContent } from "@mui/material";
+
+import {
+  Box,
+  Typography,
+  Alert,
+  Button,
+} from "@mui/material";
+
+import StatCard from
+  "../../components/stats/stats";
+
+import Loading from
+  "../../components/loading/loading";
+
+import {
+  useStudents,
+} from "../../hooks/use_students";
+
+import {
+  getStudentStats,
+} from "../../utils/stats";
+
 export default function DashboardPage() {
+  const {
+    students,
+    loading,
+    error,
+    refreshStudents,
+  } = useStudents();
+
+  if (loading) {
+    return (
+      <Loading message="Loading dashboard..." />
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ padding: 3 }}>
+        <Alert
+          severity="error"
+          action={
+            <Button
+              color="inherit"
+              onClick={
+                refreshStudents
+              }
+            >
+              Retry
+            </Button>
+          }
+        >
+          {error}
+        </Alert>
+      </Box>
+    );
+  }
+
+  const stats =
+    getStudentStats(
+      students
+    );
+
   return (
-    <Box sx={{ padding: 3 }}>
-      <Typography variant="h4" gutterBottom>
+    <Box
+      sx={{
+        padding: {
+          xs: 2,
+          md: 4,
+        },
+      }}
+    >
+      <Typography
+        variant="h4"
+        gutterBottom
+      >
         Dashboard
       </Typography>
 
-      <Typography variant="body1" sx={{ marginBottom: 3 }}>
-        Welcome to the Student Management Dashboard.
+      <Typography
+        color="text.secondary"
+        sx={{
+          marginBottom: 3,
+        }}
+      >
+        Student Management Overview
       </Typography>
 
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">
-                Total Students
-              </Typography>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "1fr 1fr",
+            lg: "repeat(5, 1fr)",
+          },
+          gap: 2,
+        }}
+      >
+        <StatCard
+          title="Total Students"
+          value={
+            stats.totalStudents
+          }
+        />
 
-              <Typography variant="h4">
-                0
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+        <StatCard
+          title="Active Students"
+          value={
+            stats.activeStudents
+          }
+        />
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">
-                Active Students
-              </Typography>
+        <StatCard
+          title="Completed Students"
+          value={
+            stats.completedStudents
+          }
+        />
 
-              <Typography variant="h4">
-                0
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+        <StatCard
+          title="Average Score"
+          value={`${stats.averageScore.toFixed(
+            1
+          )}%`}
+        />
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">
-                Completed Students
-              </Typography>
-
-              <Typography variant="h4">
-                0
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">
-                Average Score
-              </Typography>
-
-              <Typography variant="h4">
-                0%
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+        <StatCard
+          title="Pending Assignments"
+          value={
+            stats.pendingAssignments
+          }
+        />
+      </Box>
     </Box>
   );
 }
