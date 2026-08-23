@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import Header from "../components/header/header";
 import Sidebar from "../components/sidebar/sidebar";
@@ -24,6 +26,10 @@ export default function RootLayout({
           <Header />
 
           <Sidebar />
+          
+          <ToastContainer
+           position="top-right"
+           autoClose={3000}/>
 
           <main
             style={{

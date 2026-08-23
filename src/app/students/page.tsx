@@ -1,38 +1,55 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import {
+  useState,
+} from "react";
+
+import {
+  useRouter,
+} from "next/navigation";
 
 import {
   Alert,
   Box,
   Button,
-  CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
   Paper,
-  Select,
-  TextField,
   Typography,
 } from "@mui/material";
 
-import AddIcon from "@mui/icons-material/Add";
-
 import {
   DataGrid,
-  type GridColDef,
-  type GridRenderCellParams,
+  GridColDef,
 } from "@mui/x-data-grid";
 
-import { useStudents } from "../../hooks/use_students";
-import { useDebounce } from "../../hooks/use_debounce";
+import VisibilityIcon from
+  "@mui/icons-material/Visibility";
 
-import { filterStudents } from "../../utils/students_filter";
+import EditIcon from
+  "@mui/icons-material/Edit";
 
-import type {
-  StudentFilters,
-} from "../../types/students";
+import DeleteIcon from
+  "@mui/icons-material/Delete";
+
+import AddIcon from
+  "@mui/icons-material/Add";
+
+import {
+  toast,
+} from "react-toastify";
+
+import {
+  useStudents,
+} from "../../hooks/use_students";
+
+import {
+  studentService,
+} from "../../services/students_services";
+
+import ConfirmDialog from
+  "../../components/dialog/dialog";
+
+import Loading from
+  "../../components/loading/loading";
 
 export default function StudentsPage() {
   const router = useRouter();
@@ -41,116 +58,104 @@ export default function StudentsPage() {
     students,
     loading,
     error,
+    refreshStudents,
   } = useStudents();
 
-  const [filters, setFilters] =
-    useState<StudentFilters>({
-      search: "",
-      course: "",
-      status: "",
-      scoreRange: "",
-    });
+  const [
+    deleteStudentId,
+    setDeleteStudentId,
+  ] = useState<number | null>(
+    null
+  );
 
-  const [appliedFilters, setAppliedFilters] =
-    useState<StudentFilters>({
-      search: "",
-      course: "",
-      status: "",
-      scoreRange: "",
-    });
+  const [
+    deleteStudentName,
+    setDeleteStudentName,
+  ] = useState("");
 
-  const debouncedSearch =
-    useDebounce(filters.search, 300);
+  const [
+    deleteLoading,
+    setDeleteLoading,
+  ] = useState(false);
 
-  const filteredStudents = useMemo(() => {
-    return filterStudents(
-      students,
-      {
-        ...appliedFilters,
-        search: debouncedSearch,
-      }
-    );
-  }, [
-    students,
-    appliedFilters,
-    debouncedSearch,
-  ]);
+  const handleDelete = async () => {
+    if (
+      deleteStudentId === null
+    ) {
+      return;
+    }
 
-  const courses = useMemo(() => {
-    return Array.from(
-      new Set(
-        students.map(
-          (student) => student.course
-        )
-      )
-    );
-  }, [students]);
+    try {
+      setDeleteLoading(true);
 
-  const handleApplyFilters = () => {
-    setAppliedFilters({
-      ...filters,
-      search: debouncedSearch,
-    });
-  };
+      await studentService.deleteStudent(
+        deleteStudentId
+      );
 
-  const handleResetFilters = () => {
-    const emptyFilters: StudentFilters = {
-      search: "",
-      course: "",
-      status: "",
-      scoreRange: "",
-    };
+      toast.success(
+        "Student deleted successfully"
+      );
 
-    setFilters(emptyFilters);
-    setAppliedFilters(emptyFilters);
+      setDeleteStudentId(null);
+      setDeleteStudentName("");
+
+      await refreshStudents();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to delete student."
+      );
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const columns: GridColDef[] = [
     {
       field: "name",
       headerName: "Name",
-      flex: 1,
-      minWidth: 180,
+      flex: 1.2,
       valueGetter: (
         _value,
         row
       ) =>
         `${row.firstName} ${row.lastName}`,
     },
+
     {
       field: "email",
       headerName: "Email",
-      flex: 1,
-      minWidth: 220,
+      flex: 1.4,
     },
+
     {
       field: "course",
       headerName: "Course",
       flex: 1,
-      minWidth: 140,
     },
+
     {
       field: "status",
       headerName: "Status",
-      flex: 0.8,
-      minWidth: 120,
+      flex: 1,
     },
+
     {
       field: "score",
       headerName: "Score",
-      flex: 0.6,
-      minWidth: 100,
-      type: "number",
+      flex: 0.7,
     },
+
     {
       field: "actions",
       headerName: "Actions",
+      flex: 1.5,
       sortable: false,
       filterable: false,
-      flex: 1.2,
-      minWidth: 220,
+
       renderCell: (
-        params: GridRenderCellParams
+        params
       ) => (
         <Box
           sx={{
@@ -162,34 +167,43 @@ export default function StudentsPage() {
         >
           <Button
             size="small"
-            variant="outlined"
             onClick={() =>
               router.push(
                 `/students/${params.row.id}`
               )
             }
+            title="View"
           >
-            View
+            <VisibilityIcon fontSize="small" />
           </Button>
 
           <Button
             size="small"
-            variant="outlined"
             onClick={() =>
               router.push(
                 `/students/${params.row.id}/edit`
               )
             }
+            title="Edit"
           >
-            Edit
+            <EditIcon fontSize="small" />
           </Button>
 
           <Button
             size="small"
-            variant="outlined"
             color="error"
+            onClick={() => {
+              setDeleteStudentId(
+                params.row.id
+              );
+
+              setDeleteStudentName(
+                `${params.row.firstName} ${params.row.lastName}`
+              );
+            }}
+            title="Delete"
           >
-            Delete
+            <DeleteIcon fontSize="small" />
           </Button>
         </Box>
       ),
@@ -198,22 +212,27 @@ export default function StudentsPage() {
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          padding: 5,
-        }}
-      >
-        <CircularProgress />
-      </Box>
+      <Loading />
     );
   }
 
   if (error) {
     return (
       <Box sx={{ padding: 3 }}>
-        <Alert severity="error">
+        <Alert
+          severity="error"
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={
+                refreshStudents
+              }
+            >
+              Retry
+            </Button>
+          }
+        >
           {error}
         </Alert>
       </Box>
@@ -221,211 +240,116 @@ export default function StudentsPage() {
   }
 
   return (
-    <Box sx={{ padding: 3 }}>
+    <Box
+      sx={{
+        padding: {
+          xs: 2,
+          md: 4,
+        },
+      }}
+    >
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent:
+            "space-between",
           alignItems: "center",
           marginBottom: 3,
         }}
       >
-        <Box>
-          <Typography variant="h4">
-            Students
-          </Typography>
-
-          <Typography variant="body2">
-            Manage all students
-          </Typography>
-        </Box>
+        <Typography variant="h4">
+          Students
+        </Typography>
 
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() =>
-            router.push("/students/add")
+            router.push(
+              "/students/add"
+            )
           }
         >
           Add Student
         </Button>
       </Box>
 
-      <Paper
-        sx={{
-          padding: 2,
-          marginBottom: 3,
-        }}
-      >
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              md: "2fr 1fr 1fr 1fr",
-            },
-            gap: 2,
-          }}
+      {students.length === 0 ? (
+        <Alert
+          severity="info"
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() =>
+                router.push(
+                  "/students/add"
+                )
+              }
+            >
+              Add Student
+            </Button>
+          }
         >
-          <TextField
-            label="Search by name or email"
-            value={filters.search}
-            onChange={(event) =>
-              setFilters({
-                ...filters,
-                search: event.target.value,
-              })
-            }
-            fullWidth
-          />
-
-          <FormControl fullWidth>
-            <InputLabel>
-              Course
-            </InputLabel>
-
-            <Select
-              value={filters.course}
-              label="Course"
-              onChange={(event) =>
-                setFilters({
-                  ...filters,
-                  course: event.target.value,
-                })
-              }
-            >
-              <MenuItem value="">
-                All Courses
-              </MenuItem>
-
-              {courses.map((course) => (
-                <MenuItem
-                  key={course}
-                  value={course}
-                >
-                  {course}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth>
-            <InputLabel>
-              Status
-            </InputLabel>
-
-            <Select
-              value={filters.status}
-              label="Status"
-              onChange={(event) =>
-                setFilters({
-                  ...filters,
-                  status:
-                    event.target.value as StudentFilters["status"],
-                })
-              }
-            >
-              <MenuItem value="">
-                All Statuses
-              </MenuItem>
-
-              <MenuItem value="Active">
-                Active
-              </MenuItem>
-
-              <MenuItem value="Completed">
-                Completed
-              </MenuItem>
-
-              <MenuItem value="Inactive">
-                Inactive
-              </MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth>
-            <InputLabel>
-              Score
-            </InputLabel>
-
-            <Select
-              value={filters.scoreRange}
-              label="Score"
-              onChange={(event) =>
-                setFilters({
-                  ...filters,
-                  scoreRange:
-                    event.target.value as StudentFilters["scoreRange"],
-                })
-              }
-            >
-              <MenuItem value="">
-                All Scores
-              </MenuItem>
-
-              <MenuItem value="0-50">
-                0–50
-              </MenuItem>
-
-              <MenuItem value="51-75">
-                51–75
-              </MenuItem>
-
-              <MenuItem value="76-100">
-                76–100
-              </MenuItem>
-            </Select>
-          </FormControl>
-        </Box>
-
-        <Box
-          sx={{
-            display: "flex",
-            gap: 2,
-            marginTop: 2,
-          }}
-        >
-          <Button
-            variant="contained"
-            onClick={handleApplyFilters}
-          >
-            Apply
-          </Button>
-
-          <Button
-            variant="outlined"
-            onClick={handleResetFilters}
-          >
-            Reset
-          </Button>
-        </Box>
-      </Paper>
-
-      {filteredStudents.length === 0 ? (
-        <Alert severity="info">
-          No students found matching your
-          search or filters.
+          No students found.
         </Alert>
       ) : (
-        <Paper>
+        <Paper
+          sx={{
+            width: "100%",
+          }}
+        >
           <DataGrid
-            rows={filteredStudents}
+            rows={students}
             columns={columns}
-            getRowId={(row) => row.id}
+            autoHeight
+            pageSizeOptions={[
+              5,
+              10,
+              25,
+            ]}
             initialState={{
               pagination: {
                 paginationModel: {
+                  pageSize: 10,
                   page: 0,
-                  pageSize: 5,
                 },
               },
             }}
-            pageSizeOptions={[5, 10, 25]}
             disableRowSelectionOnClick
-            autoHeight
           />
         </Paper>
       )}
+
+      <ConfirmDialog
+        open={
+          deleteStudentId !== null
+        }
+        studentName={
+          deleteStudentName
+        }
+        loading={
+          deleteLoading
+        }
+        onCancel={() => {
+          if (
+            deleteLoading
+          ) {
+            return;
+          }
+
+          setDeleteStudentId(
+            null
+          );
+
+          setDeleteStudentName(
+            ""
+          );
+        }}
+        onConfirm={
+          handleDelete
+        }
+      />
     </Box>
   );
 }
