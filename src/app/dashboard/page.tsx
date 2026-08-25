@@ -21,6 +21,9 @@ import {
   getStudentStats,
 } from "../../utils/stats";
 
+import ProtectedRoute from
+  "../../components/route/route";
+
 export default function DashboardPage() {
   const {
     students,
@@ -31,29 +34,33 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <Loading message="Loading dashboard..." />
+      <ProtectedRoute>
+        <Loading message="Loading dashboard..." />
+      </ProtectedRoute>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ padding: 3 }}>
-        <Alert
-          severity="error"
-          action={
-            <Button
-              color="inherit"
-              onClick={
-                refreshStudents
-              }
-            >
-              Retry
-            </Button>
-          }
-        >
-          {error}
-        </Alert>
-      </Box>
+      <ProtectedRoute>
+        <Box sx={{ padding: 3 }}>
+          <Alert
+            severity="error"
+            action={
+              <Button
+                color="inherit"
+                onClick={
+                  refreshStudents
+                }
+              >
+                Retry
+              </Button>
+            }
+          >
+            {error}
+          </Alert>
+        </Box>
+      </ProtectedRoute>
     );
   }
 
@@ -63,76 +70,78 @@ export default function DashboardPage() {
     );
 
   return (
-    <Box
-      sx={{
-        padding: {
-          xs: 2,
-          md: 4,
-        },
-      }}
-    >
-      <Typography
-        variant="h4"
-        gutterBottom
-      >
-        Dashboard
-      </Typography>
-
-      <Typography
-        color="text.secondary"
-        sx={{
-          marginBottom: 3,
-        }}
-      >
-        Student Management Overview
-      </Typography>
-
+    <ProtectedRoute>
       <Box
         sx={{
-          display: "grid",
-          gridTemplateColumns: {
-            xs: "1fr",
-            sm: "1fr 1fr",
-            lg: "repeat(5, 1fr)",
+          padding: {
+            xs: 2,
+            md: 4,
           },
-          gap: 2,
         }}
       >
-        <StatCard
-          title="Total Students"
-          value={
-            stats.totalStudents
-          }
-        />
+        <Typography
+          variant="h4"
+          gutterBottom
+        >
+          Dashboard
+        </Typography>
 
-        <StatCard
-          title="Active Students"
-          value={
-            stats.activeStudents
-          }
-        />
+        <Typography
+          color="text.secondary"
+          sx={{
+            marginBottom: 3,
+          }}
+        >
+          Student Management Overview
+        </Typography>
 
-        <StatCard
-          title="Completed Students"
-          value={
-            stats.completedStudents
-          }
-        />
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "1fr 1fr",
+              lg: "repeat(5, 1fr)",
+            },
+            gap: 2,
+          }}
+        >
+          <StatCard
+            title="Total Students"
+            value={
+              stats.totalStudents
+            }
+          />
 
-        <StatCard
-          title="Average Score"
-          value={`${stats.averageScore.toFixed(
-            1
-          )}%`}
-        />
+          <StatCard
+            title="Active Students"
+            value={
+              stats.activeStudents
+            }
+          />
 
-        <StatCard
-          title="Pending Assignments"
-          value={
-            stats.pendingAssignments
-          }
-        />
+          <StatCard
+            title="Completed Students"
+            value={
+              stats.completedStudents
+            }
+          />
+
+          <StatCard
+            title="Average Score"
+            value={`${stats.averageScore.toFixed(
+              1
+            )}%`}
+          />
+
+          <StatCard
+            title="Pending Assignments"
+            value={
+              stats.pendingAssignments
+            }
+          />
+        </Box>
       </Box>
-    </Box>
+    </ProtectedRoute>
   );
 }

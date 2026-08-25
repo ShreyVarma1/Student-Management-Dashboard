@@ -3,5 +3,5 @@ import {
 } from "next/navigation";
 
 export default function HomePage() {
-  redirect("/dashboard");
+  redirect("/login");
 }

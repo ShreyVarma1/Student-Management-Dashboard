@@ -1,5 +1,9 @@
 "use client";
 
+import ProtectedRoute from "../../../components/route/route";
+
+import StudentForm from "../../../components/form/form";
+
 import {
   useRouter,
 } from "next/navigation";
@@ -13,8 +17,6 @@ import {
 import {
   toast,
 } from "react-toastify";
-
-import StudentForm from "../../../components/form/form";
 
 import { studentService } from "../../../services/students_services";
 
@@ -64,22 +66,8 @@ export default function AddStudentPage() {
   };
 
   return (
-    <Box
-      sx={{
-        padding: {
-          xs: 2,
-          md: 4,
-        },
-      }}
-    >
-      <Typography
-        variant="h4"
-        gutterBottom
-      >
-        Add Student
-      </Typography>
-
-      <Paper
+    <ProtectedRoute>
+      <Box
         sx={{
           padding: {
             xs: 2,
@@ -87,14 +75,30 @@ export default function AddStudentPage() {
           },
         }}
       >
-        <StudentForm
-          initialValues={
-            initialValues
-          }
-          submitLabel="Add Student"
-          onSubmit={handleSubmit}
-        />
-      </Paper>
-    </Box>
+        <Typography
+          variant="h4"
+          gutterBottom
+        >
+          Add Student
+        </Typography>
+
+        <Paper
+          sx={{
+            padding: {
+              xs: 2,
+              md: 4,
+            },
+          }}
+        >
+          <StudentForm
+            initialValues={
+              initialValues
+            }
+            submitLabel="Add Student"
+            onSubmit={handleSubmit}
+          />
+        </Paper>
+      </Box>
+    </ProtectedRoute>
   );
 }

@@ -51,6 +51,9 @@ import ConfirmDialog from
 import Loading from
   "../../components/loading/loading";
 
+import ProtectedRoute from
+  "../../components/route/route";
+
 export default function StudentsPage() {
   const router = useRouter();
 
@@ -97,6 +100,7 @@ export default function StudentsPage() {
       );
 
       setDeleteStudentId(null);
+
       setDeleteStudentName("");
 
       await refreshStudents();
@@ -116,6 +120,7 @@ export default function StudentsPage() {
       field: "name",
       headerName: "Name",
       flex: 1.2,
+
       valueGetter: (
         _value,
         row
@@ -212,144 +217,150 @@ export default function StudentsPage() {
 
   if (loading) {
     return (
-      <Loading />
+      <ProtectedRoute>
+        <Loading />
+      </ProtectedRoute>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ padding: 3 }}>
-        <Alert
-          severity="error"
-          action={
-            <Button
-              color="inherit"
-              size="small"
-              onClick={
-                refreshStudents
-              }
-            >
-              Retry
-            </Button>
-          }
-        >
-          {error}
-        </Alert>
-      </Box>
+      <ProtectedRoute>
+        <Box sx={{ padding: 3 }}>
+          <Alert
+            severity="error"
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={
+                  refreshStudents
+                }
+              >
+                Retry
+              </Button>
+            }
+          >
+            {error}
+          </Alert>
+        </Box>
+      </ProtectedRoute>
     );
   }
 
   return (
-    <Box
-      sx={{
-        padding: {
-          xs: 2,
-          md: 4,
-        },
-      }}
-    >
+    <ProtectedRoute>
       <Box
         sx={{
-          display: "flex",
-          justifyContent:
-            "space-between",
-          alignItems: "center",
-          marginBottom: 3,
+          padding: {
+            xs: 2,
+            md: 4,
+          },
         }}
       >
-        <Typography variant="h4">
-          Students
-        </Typography>
-
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() =>
-            router.push(
-              "/students/add"
-            )
-          }
-        >
-          Add Student
-        </Button>
-      </Box>
-
-      {students.length === 0 ? (
-        <Alert
-          severity="info"
-          action={
-            <Button
-              color="inherit"
-              size="small"
-              onClick={() =>
-                router.push(
-                  "/students/add"
-                )
-              }
-            >
-              Add Student
-            </Button>
-          }
-        >
-          No students found.
-        </Alert>
-      ) : (
-        <Paper
+        <Box
           sx={{
-            width: "100%",
+            display: "flex",
+            justifyContent:
+              "space-between",
+            alignItems: "center",
+            marginBottom: 3,
           }}
         >
-          <DataGrid
-            rows={students}
-            columns={columns}
-            autoHeight
-            pageSizeOptions={[
-              5,
-              10,
-              25,
-            ]}
-            initialState={{
-              pagination: {
-                paginationModel: {
-                  pageSize: 10,
-                  page: 0,
-                },
-              },
+          <Typography
+            variant="h4"
+          >
+            Students
+          </Typography>
+
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() =>
+              router.push(
+                "/students/add"
+              )
+            }
+          >
+            Add Student
+          </Button>
+        </Box>
+
+        {students.length === 0 ? (
+          <Alert
+            severity="info"
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() =>
+                  router.push(
+                    "/students/add"
+                  )
+                }
+              >
+                Add Student
+              </Button>
+            }
+          >
+            No students found.
+          </Alert>
+        ) : (
+          <Paper
+            sx={{
+              width: "100%",
             }}
-            disableRowSelectionOnClick
-          />
-        </Paper>
-      )}
+          >
+            <DataGrid
+              rows={students}
+              columns={columns}
+              autoHeight
+              pageSizeOptions={[
+                5,
+                10,
+                25,
+              ]}
+              initialState={{
+                pagination: {
+                  paginationModel: {
+                    pageSize: 10,
+                    page: 0,
+                  },
+                },
+              }}
+              disableRowSelectionOnClick
+            />
+          </Paper>
+        )}
 
-      <ConfirmDialog
-        open={
-          deleteStudentId !== null
-        }
-        studentName={
-          deleteStudentName
-        }
-        loading={
-          deleteLoading
-        }
-        onCancel={() => {
-          if (
-            deleteLoading
-          ) {
-            return;
+        <ConfirmDialog
+          open={
+            deleteStudentId !== null
           }
+          studentName={
+            deleteStudentName
+          }
+          loading={
+            deleteLoading
+          }
+          onCancel={() => {
+            if (deleteLoading) {
+              return;
+            }
 
-          setDeleteStudentId(
-            null
-          );
+            setDeleteStudentId(
+              null
+            );
 
-          setDeleteStudentName(
-            ""
-          );
-        }}
-        onConfirm={
-          handleDelete
-        }
-      />
-    </Box>
+            setDeleteStudentName(
+              ""
+            );
+          }}
+          onConfirm={
+            handleDelete
+          }
+        />
+      </Box>
+    </ProtectedRoute>
   );
 }

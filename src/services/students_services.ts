@@ -75,7 +75,7 @@ function readStudents(): Student[] {
   }
 
   try {
-    return JSON.parse(stored);
+    return JSON.parse(stored) as Student[];
   } catch {
     localStorage.setItem(
       STORAGE_KEY,
@@ -96,10 +96,13 @@ function saveStudents(
 }
 
 export const studentService = {
+  // =========================================
+  // GET ALL STUDENTS
+  // =========================================
   async getStudents(): Promise<Student[]> {
     return readStudents();
   },
-
+  
   async getStudentById(
     id: number
   ): Promise<Student | undefined> {
@@ -108,27 +111,52 @@ export const studentService = {
     );
   },
 
+  // =========================================
+  // CHECK EMAIL
+  //
+  // excludeId is important for EDIT.
+  //
+  // Example:
+  // Student 1 already has shrey@gmail.com
+  //
+  // Editing Student 1 and keeping
+  // shrey@gmail.com:
+  //
+  // emailExists("shrey@gmail.com", 1)
+  // => false
+  //
+  // Creating another student with
+  // shrey@gmail.com:
+  //
+  // emailExists("shrey@gmail.com")
+  // => true
+  // =========================================
   async emailExists(
     email: string,
     excludeId?: number
   ): Promise<boolean> {
+    const normalizedEmail =
+      email.trim().toLowerCase();
+
     return readStudents().some(
       (student) =>
-        student.email.toLowerCase() ===
-          email.trim().toLowerCase() &&
+        student.email.trim().toLowerCase() ===
+          normalizedEmail &&
         student.id !== excludeId
     );
   },
 
+  // =========================================
+  // CREATE STUDENT
+  // =========================================
   async createStudent(
     data: StudentInput
   ): Promise<Student> {
     const students = readStudents();
 
+    // New students must have unique emails.
     const exists =
-      await this.emailExists(
-        data.email
-      );
+      await this.emailExists(data.email);
 
     if (exists) {
       throw new Error(
@@ -158,6 +186,9 @@ export const studentService = {
     return newStudent;
   },
 
+  // =========================================
+  // UPDATE STUDENT
+  // =========================================
   async updateStudent(
     id: number,
     data: StudentInput
@@ -176,6 +207,29 @@ export const studentService = {
       );
     }
 
+    // IMPORTANT:
+    //
+    // Exclude the student currently being edited.
+    //
+    // This means:
+    //
+    // Student 1:
+    // shrey@gmail.com
+    //
+    // updateStudent(1, {
+    //   email: "shrey@gmail.com"
+    // })
+    //
+    // will NOT be treated as duplicate.
+    //
+    // But if Student 2 tries to use
+    // shrey@gmail.com:
+    //
+    // updateStudent(2, {
+    //   email: "shrey@gmail.com"
+    // })
+    //
+    // it WILL be treated as duplicate.
     const exists =
       await this.emailExists(
         data.email,
@@ -201,6 +255,9 @@ export const studentService = {
     return updatedStudent;
   },
 
+  // =========================================
+  // DELETE STUDENT
+  // =========================================
   async deleteStudent(
     id: number
   ): Promise<void> {

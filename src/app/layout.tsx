@@ -9,6 +9,10 @@ import {
 } from "../context/context";
 
 import {
+  AuthProvider,
+} from "../context/auth_context";
+
+import {
   ToastContainer,
 } from "react-toastify";
 
@@ -28,23 +32,25 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AppProvider>
-          <Header />
+        <AuthProvider>
+          <AppProvider>
+            <Header />
 
-          <main
-            style={{
-              paddingTop: "80px",
-              minHeight: "100vh",
-            }}
-          >
-            {children}
-          </main>
+            <main
+              style={{
+                paddingTop: "80px",
+                minHeight: "100vh",
+              }}
+            >
+              {children}
+            </main>
 
-          <ToastContainer
-            position="top-right"
-            autoClose={3000}
-          />
-        </AppProvider>
+            <ToastContainer
+              position="top-right"
+              autoClose={3000}
+            />
+          </AppProvider>
+        </AuthProvider>
       </body>
     </html>
   );

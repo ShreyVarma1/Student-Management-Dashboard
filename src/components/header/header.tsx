@@ -11,13 +11,27 @@ import {
 import Link from "next/link";
 
 import {
-  useAppContext,
-} from "../../context/context";
+  useRouter,
+} from "next/navigation";
+
+import {
+  useAuth,
+} from "../../context/auth_context";
 
 export default function Header() {
+  const router = useRouter();
+
   const {
-    currentUser,
-  } = useAppContext();
+    user,
+    isAuthenticated,
+    logout,
+  } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+
+    router.push("/login");
+  };
 
   return (
     <AppBar
@@ -34,60 +48,103 @@ export default function Header() {
           gap: 2,
         }}
       >
+        {/* LOGO / TITLE */}
+
         <Typography
           variant="h6"
-          component="div"
+          component={Link}
+          href={
+            isAuthenticated
+              ? "/dashboard"
+              : "/login"
+          }
           sx={{
+            color: "inherit",
+            textDecoration: "none",
             fontWeight: 700,
           }}
         >
           Student Management
         </Typography>
 
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            flexWrap: "wrap",
-          }}
-        >
-          <Button
-            component={Link}
-            href="/dashboard"
-            color="inherit"
-          >
-            Dashboard
-          </Button>
+        {/* RIGHT SIDE */}
 
-          <Button
-            component={Link}
-            href="/students"
-            color="inherit"
-          >
-            Students
-          </Button>
-
-          <Button
-            component={Link}
-            href="/students/add"
-            color="inherit"
-          >
-            Add Student
-          </Button>
-
-          <Typography
-            variant="body2"
+        {!isAuthenticated ? (
+          <Box
             sx={{
-              marginLeft: 1,
-              paddingLeft: 1,
-              borderLeft:
-                "1px solid rgba(255,255,255,0.4)",
+              display: "flex",
+              gap: 1,
             }}
           >
-            {currentUser}
-          </Typography>
-        </Box>
+            <Button
+              component={Link}
+              href="/login"
+              color="inherit"
+            >
+              Login
+            </Button>
+
+            <Button
+              component={Link}
+              href="/register"
+              color="inherit"
+            >
+              Register
+            </Button>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              flexWrap: "wrap",
+            }}
+          >
+            <Button
+              component={Link}
+              href="/dashboard"
+              color="inherit"
+            >
+              Dashboard
+            </Button>
+
+            <Button
+              component={Link}
+              href="/students"
+              color="inherit"
+            >
+              Students
+            </Button>
+
+            <Button
+              component={Link}
+              href="/students/add"
+              color="inherit"
+            >
+              Add Student
+            </Button>
+
+            {user && (
+              <Typography
+                variant="body2"
+                sx={{
+                  marginLeft: 1,
+                  fontWeight: 600,
+                }}
+              >
+                {user.username}
+              </Typography>
+            )}
+
+            <Button
+              color="inherit"
+              onClick={handleLogout}
+            >
+              Logout
+            </Button>
+          </Box>
+        )}
       </Toolbar>
     </AppBar>
   );

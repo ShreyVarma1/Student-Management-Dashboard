@@ -36,6 +36,7 @@ import {
 import type {
   Student,
 } from "../../../types/students";
+import ProtectedRoute from "@/src/components/route/route";
 
 export default function StudentDetailsPage() {
   const params = useParams();
@@ -130,17 +131,18 @@ export default function StudentDetailsPage() {
   }
 
   return (
-    <Box
-      sx={{
-        padding: {
-          xs: 2,
-          sm: 3,
-          md: 4,
-        },
-        maxWidth: 1200,
-        margin: "0 auto",
-      }}
-    >
+    <ProtectedRoute>
+      <Box
+        sx={{
+          padding: {
+            xs: 2,
+            sm: 3,
+            md: 4,
+          },
+          maxWidth: 1200,
+          margin: "0 auto",
+        }}
+      >
       <Box
         sx={{
           display: "flex",
@@ -425,6 +427,7 @@ export default function StudentDetailsPage() {
           </Box>
         </CardContent>
       </Card>
-    </Box>
+      </Box>
+    </ProtectedRoute>
   );
 }

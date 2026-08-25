@@ -18,7 +18,6 @@ import {
   StepLabel,
   Stepper,
   TextField,
-  Typography,
 } from "@mui/material";
 
 import {
@@ -31,17 +30,24 @@ import type {
   StudentInput,
 } from "../../types/students";
 
-import { studentSchema } from "../../validation/students_schema";
+import {
+  studentSchema,
+} from "../../validation/students_schema";
 
-import { studentService } from "../../services/students_services";
+import {
+  studentService,
+} from "../../services/students_services";
 
 interface StudentFormProps {
   initialValues: StudentInput;
+
   submitLabel: string;
+
   onSubmit: (
     values: StudentInput,
     formikHelpers: FormikHelpers<StudentInput>
   ) => Promise<void>;
+  studentId?: string;
 }
 
 const steps = [
@@ -54,7 +60,8 @@ export default function StudentForm({
   initialValues,
   submitLabel,
   onSubmit,
-}: StudentFormProps) {
+  studentId
+}: StudentFormProps) {        
   const [activeStep, setActiveStep] =
     useState(0);
 
@@ -64,47 +71,46 @@ export default function StudentForm({
   const [checkingEmail, setCheckingEmail] =
     useState(false);
 
+  /*
+   * Fields belonging to each step.
+   */
+  const stepFields: Array<
+    Array<keyof StudentInput>
+  > = [
+    [
+      "firstName",
+      "lastName",
+      "email",
+      "phone",
+      "dateOfBirth",
+    ],
+
+    [
+      "course",
+      "batch",
+      "startDate",
+      "trainer",
+    ],
+
+    [
+      "experience",
+      "status",
+      "score",
+      "pendingAssignments",
+    ],
+  ];
+
+  /*
+   * Validate only the fields
+   * belonging to the current step.
+   */
   const validateStep = async (
     values: StudentInput
-  ) => {
+  ): Promise<boolean> => {
     try {
-      const stepFields: Array<
-        keyof StudentInput
-      >[] = [
-        [
-          "firstName",
-          "lastName",
-          "email",
-          "phone",
-          "dateOfBirth",
-        ],
-        [
-          "course",
-          "batch",
-          "startDate",
-          "trainer",
-        ],
-        [
-          "experience",
-          "status",
-          "score",
-          "pendingAssignments",
-        ],
-      ];
-
-      await studentSchema.validateAt(
-        stepFields[activeStep][0],
-        values
-      );
-
-      for (
-        let i = 1;
-        i <
-        stepFields[activeStep].length;
-        i++
-      ) {
+      for (const field of stepFields[activeStep]) {
         await studentSchema.validateAt(
-          stepFields[activeStep][i],
+          field,
           values
         );
       }
@@ -115,6 +121,9 @@ export default function StudentForm({
     }
   };
 
+  /*
+   * Check whether the email already exists.
+   */
   const checkEmail = async (
     email: string
   ): Promise<boolean> => {
@@ -123,6 +132,9 @@ export default function StudentForm({
     }
 
     try {
+      /*
+       * First validate the email format.
+       */
       await studentSchema.validateAt(
         "email",
         { email }
@@ -133,7 +145,10 @@ export default function StudentForm({
 
       const exists =
         await studentService.emailExists(
-          email
+          email,
+          studentId === undefined
+            ? undefined
+            : Number(studentId)
         );
 
       if (exists) {
@@ -144,23 +159,25 @@ export default function StudentForm({
 
       return !exists;
     } catch {
-      // Yup handles normal email validation.
       return false;
     } finally {
       setCheckingEmail(false);
     }
   };
 
+  /*
+   * Whenever initialValues change,
+   * start the form from Step 1.
+   */
   useEffect(() => {
     setActiveStep(0);
+    setEmailError("");
   }, [initialValues]);
 
   return (
     <Formik
       initialValues={initialValues}
-      validationSchema={
-        studentSchema
-      }
+      validationSchema={studentSchema}
       enableReinitialize
       validateOnBlur
       validateOnChange={false}
@@ -172,15 +189,20 @@ export default function StudentForm({
         touched,
         handleChange,
         handleBlur,
-        setFieldValue,
-        submitForm,
+        setFieldTouched,
         isSubmitting,
       }) => (
         <Form>
+          {/* ========================= */}
+          {/* STEPPER */}
+          {/* ========================= */}
+
           <Stepper
             activeStep={activeStep}
             alternativeLabel
-            sx={{ marginBottom: 4 }}
+            sx={{
+              marginBottom: 4,
+            }}
           >
             {steps.map((label) => (
               <Step key={label}>
@@ -191,14 +213,25 @@ export default function StudentForm({
             ))}
           </Stepper>
 
+          {/* ========================= */}
+          {/* EMAIL ERROR */}
+          {/* ========================= */}
+
           {emailError && (
             <Alert
               severity="error"
-              sx={{ marginBottom: 2 }}
+              sx={{
+                marginBottom: 2,
+              }}
             >
               {emailError}
             </Alert>
           )}
+
+          {/* ========================= */}
+          {/* STEP 1 */}
+          {/* PERSONAL INFORMATION */}
+          {/* ========================= */}
 
           {activeStep === 0 && (
             <Box
@@ -257,9 +290,7 @@ export default function StudentForm({
                   handleChange(event);
                   setEmailError("");
                 }}
-                onBlur={async (
-                  event
-                ) => {
+                onBlur={async (event) => {
                   handleBlur(event);
 
                   await checkEmail(
@@ -275,10 +306,10 @@ export default function StudentForm({
                 }
                 helperText={
                   emailError ||
-                  (touched.email
-                    ? errors.email
-                    : checkingEmail
+                  (checkingEmail
                     ? "Checking email..."
+                    : touched.email
+                    ? errors.email
                     : "")
                 }
               />
@@ -306,9 +337,7 @@ export default function StudentForm({
                 label="Date of Birth"
                 name="dateOfBirth"
                 type="date"
-                value={
-                  values.dateOfBirth
-                }
+                value={values.dateOfBirth}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 slotProps={{
@@ -318,9 +347,7 @@ export default function StudentForm({
                 }}
                 error={
                   touched.dateOfBirth &&
-                  Boolean(
-                    errors.dateOfBirth
-                  )
+                  Boolean(errors.dateOfBirth)
                 }
                 helperText={
                   touched.dateOfBirth
@@ -330,6 +357,11 @@ export default function StudentForm({
               />
             </Box>
           )}
+
+          {/* ========================= */}
+          {/* STEP 2 */}
+          {/* COURSE INFORMATION */}
+          {/* ========================= */}
 
           {activeStep === 1 && (
             <Box
@@ -411,9 +443,7 @@ export default function StudentForm({
                 label="Start Date"
                 name="startDate"
                 type="date"
-                value={
-                  values.startDate
-                }
+                value={values.startDate}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 slotProps={{
@@ -423,9 +453,7 @@ export default function StudentForm({
                 }}
                 error={
                   touched.startDate &&
-                  Boolean(
-                    errors.startDate
-                  )
+                  Boolean(errors.startDate)
                 }
                 helperText={
                   touched.startDate
@@ -454,6 +482,11 @@ export default function StudentForm({
             </Box>
           )}
 
+          {/* ========================= */}
+          {/* STEP 3 */}
+          {/* ACADEMIC INFORMATION */}
+          {/* ========================= */}
+
           {activeStep === 2 && (
             <Box
               sx={{
@@ -470,16 +503,12 @@ export default function StudentForm({
                 label="Experience (years)"
                 name="experience"
                 type="number"
-                value={
-                  values.experience
-                }
+                value={values.experience}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 error={
                   touched.experience &&
-                  Boolean(
-                    errors.experience
-                  )
+                  Boolean(errors.experience)
                 }
                 helperText={
                   touched.experience
@@ -570,55 +599,126 @@ export default function StudentForm({
             </Box>
           )}
 
+          {/* ========================= */}
+          {/* BUTTONS */}
+          {/* ========================= */}
+
           <Box
             sx={{
               display: "flex",
-              justifyContent: "space-between",
+              justifyContent:
+                "space-between",
               marginTop: 4,
             }}
           >
+            {/* BACK BUTTON */}
+
             <Button
+              type="button"
               disabled={activeStep === 0}
-              onClick={() =>
+              onClick={() => {
                 setActiveStep(
                   (previous) =>
                     previous - 1
-                )
-              }
+                );
+              }}
             >
               Back
             </Button>
 
-            {activeStep < steps.length - 1 ? (
-  <Button
-    variant="contained"
-    onClick={async () => {
-      const valid =
-        await validateStep(values);
+            {/* ========================= */}
+            {/* NEXT BUTTON */}
+            {/* ========================= */}
 
-      if (!valid) {
-        await submitForm();
-        return;
-      }
+            {activeStep <
+            steps.length - 1 ? (
+              <Button
+                type="button"
+                variant="contained"
+                onClick={async (event) => {
+                  /*
+                   * VERY IMPORTANT:
+                   * Prevent this button from
+                   * submitting the Formik form.
+                   */
+                  event.preventDefault();
+                  event.stopPropagation();
 
-      // Check email only on Step 1
-      if (activeStep === 0) {
-        const emailValid =
-          await checkEmail(values.email);
+                  /*
+                   * Validate only the
+                   * current step.
+                   */
+                  const valid =
+                    await validateStep(
+                      values
+                    );
 
-        if (!emailValid) {
-          return;
-        }
-      }
+                  /*
+                   * If current step is invalid,
+                   * mark its fields as touched
+                   * so validation messages appear.
+                   */
+                  if (!valid) {
+                    for (
+                      const field of
+                        stepFields[
+                          activeStep
+                        ]
+                    ) {
+                      await setFieldTouched(
+                        field,
+                        true
+                      );
+                    }
 
-      setActiveStep(
-        (previous) => previous + 1
-      );
-    }}
-  >
-    Next
-  </Button>
-) : (
+                    return;
+                  }
+
+                  /*
+                   * Check email only after
+                   * Personal Information.
+                   */
+                  if (
+                    activeStep === 0
+                  ) {
+                    const emailValid =
+                      await checkEmail(
+                        values.email
+                      );
+
+                    if (!emailValid) {
+                      await setFieldTouched(
+                        "email",
+                        true
+                      );
+
+                      return;
+                    }
+                  }
+
+                  /*
+                   * IMPORTANT:
+                   *
+                   * We are ONLY moving to
+                   * the next step here.
+                   *
+                   * No createStudent()
+                   * No submitForm()
+                   * No form submission.
+                   */
+                  setActiveStep(
+                    (previous) =>
+                      previous + 1
+                  );
+                }}
+              >
+                Next
+              </Button>
+            ) : (
+              /* ========================= */
+              /* FINAL SUBMIT BUTTON */
+              /* ========================= */
+
               <Button
                 type="submit"
                 variant="contained"

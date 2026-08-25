@@ -22,6 +22,8 @@ import {
   toast,
 } from "react-toastify";
 
+import ProtectedRoute from "../../../../components/route/route";
+
 import StudentForm from "../../../../components/form/form";
 
 import { studentService } from "../../../../services/students_services";
@@ -175,22 +177,8 @@ export default function EditStudentPage() {
   };
 
   return (
-    <Box
-      sx={{
-        padding: {
-          xs: 2,
-          md: 4,
-        },
-      }}
-    >
-      <Typography
-        variant="h4"
-        gutterBottom
-      >
-        Edit Student
-      </Typography>
-
-      <Paper
+    <ProtectedRoute>
+      <Box
         sx={{
           padding: {
             xs: 2,
@@ -198,14 +186,31 @@ export default function EditStudentPage() {
           },
         }}
       >
-        <StudentForm
-          initialValues={
-            initialValues
-          }
-          submitLabel="Save Changes"
-          onSubmit={handleSubmit}
-        />
-      </Paper>
-    </Box>
+        <Typography
+          variant="h4"
+          gutterBottom
+        >
+          Edit Student
+        </Typography>
+
+        <Paper
+          sx={{
+            padding: {
+              xs: 2,
+              md: 4,
+            },
+          }}
+        >
+          <StudentForm
+            initialValues={
+              initialValues
+            }
+            submitLabel="Save Changes"
+            studentId={String(student.id)}
+            onSubmit={handleSubmit}
+          />
+        </Paper>
+      </Box>
+    </ProtectedRoute>
   );
 }
