@@ -1,15 +1,15 @@
 # Student Management Dashboard
 
-A responsive Student Management Dashboard built using Next.js, React, TypeScript, Material UI, Formik, Yup and MUI DataGrid.
+A responsive Student Management Dashboard built using Next.js, React, TypeScript, Material UI (MUI), Formik, Yup and MUI DataGrid.
 
-The application allows users to manage students through a complete CRUD workflow with dashboard statistics, validation, search/filtering, pagination, student details, editing and deletion.
+The application provides a complete authentication flow (register, login, logout) and a protected student management workflow with dashboard statistics, validation, search/filtering helpers, pagination, student details, editing and deletion.
 
 ---
 
 ## Tech Stack
 
-- Next.js
-- React
+- Next.js 16
+- React 19
 - TypeScript
 - Material UI (MUI)
 - MUI DataGrid
@@ -22,6 +22,41 @@ The application allows users to manage students through a complete CRUD workflow
 ---
 
 ## Features
+
+### Authentication
+
+The application includes a client-side authentication system backed by `localStorage`.
+
+#### Register
+
+- Username, email, password and confirm password fields.
+- Validates required fields.
+- Password must be at least 6 characters.
+- Password and confirm password must match.
+- Username must be unique.
+- Email must be unique.
+- On success, the user is redirected to `/login?registered=true`, which shows a success message.
+
+#### Login
+
+- Email and password fields.
+- Validates required fields.
+- Checks credentials against registered users.
+- On success, the session is stored and the user is redirected to `/dashboard`.
+- Already-authenticated users are redirected away from the login page.
+
+#### Logout
+
+- Clears the stored session.
+- Redirects the user to `/login`.
+
+#### Protected Routes
+
+Every student-related page (Dashboard, Students, Add Student, Student Details, Edit Student) is wrapped in a `ProtectedRoute` component.
+
+If the user is not authenticated (and the auth state has finished loading), the user is redirected to `/login`. While the auth state is loading, a spinner is shown.
+
+---
 
 ### Dashboard
 
@@ -45,14 +80,11 @@ The Students page provides:
 - MUI DataGrid
 - Pagination
 - Sorting
-- Search/filtering
-- Course filtering
-- Status filtering
-- Score filtering
 - View student
 - Edit student
 - Delete student
 - Delete confirmation dialog
+- Empty state
 
 ---
 
@@ -96,7 +128,7 @@ Validation includes:
 - Valid email format
 - Unique email
 - Required phone number
-- Phone number must contain 10 digits
+- Phone number must contain exactly 10 digits
 - Required date of birth
 - Required course
 - Required batch
@@ -202,17 +234,29 @@ When there are no students, the application displays an empty-state message and 
 
 React `useContext` is used for shared application information.
 
-The application currently provides the current user through:
+The application provides two contexts:
 
-`AppContext`
+- `AuthContext` - exposes `user`, `loading`, `isAuthenticated`, `login` and `logout`.
+- `AppContext` - exposes `currentUser` and `setCurrentUser`.
 
-Example:
+The `AuthProvider` is responsible for the logged-in user and consumed by the Header and `ProtectedRoute` without prop drilling.
+
+---
+
+### Client-side Filtering Helpers
+
+The project includes reusable filtering infrastructure:
+
+- `useDebounce(value, delay)` - debounces a value.
+- `filterStudents(students, filters)` - filters students by search (name/email), course, status and score range.
+
+The score range options are:
 
 ```text
-Admin
+0-50
+51-75
+76-100
 ```
-
-This information can be consumed by components such as the Header without prop drilling.
 
 ---
 
@@ -222,9 +266,17 @@ This information can be consumed by components such as the Header without prop d
 src/
 │
 ├── app/
+│   ├── layout.tsx
 │   ├── page.tsx
+│   ├── globals.css
 │   │
 │   ├── dashboard/
+│   │   └── page.tsx
+│   │
+│   ├── login/
+│   │   └── page.tsx
+│   │
+│   ├── register/
 │   │   └── page.tsx
 │   │
 │   └── students/
@@ -239,38 +291,49 @@ src/
 │               └── page.tsx
 │
 ├── components/
-│   ├── ConfirmDialog/
-│   │   └── ConfirmDialog.tsx
+│   ├── dialog/
+│   │   └── dialog.tsx
 │   │
-│   ├── Loading/
-│   │   └── Loading.tsx
+│   ├── form/
+│   │   └── form.tsx
 │   │
-│   ├── StatCard/
-│   │   └── StatCard.tsx
+│   ├── header/
+│   │   └── header.tsx
 │   │
-│   ├── StudentForm/
-│   │   └── StudentForm.tsx
+│   ├── loading/
+│   │   └── loading.tsx
 │   │
-│   └── header/
-│       └── header.tsx
+│   ├── route/
+│   │   └── route.tsx
+│   │
+│   ├── sidebar/
+│   │   └── sidebar.tsx
+│   │
+│   └── stats/
+│       └── stats.tsx
 │
 ├── context/
-│   └── AppContext.tsx
+│   ├── auth_context.tsx
+│   └── context.tsx
 │
 ├── hooks/
-│   └── useStudents.ts
+│   ├── use_debounce.ts
+│   └── use_students.ts
 │
 ├── services/
-│   └── studentService.ts
+│   ├── auth_services.ts
+│   └── students_services.ts
 │
 ├── types/
-│   └── student.ts
+│   ├── auth.ts
+│   └── students.ts
 │
 ├── utils/
-│   └── studentStats.ts
+│   ├── stats.ts
+│   └── students_filter.ts
 │
 └── validation/
-    └── studentSchema.ts
+    └── students_schema.ts
 ```
 
 ---
@@ -281,12 +344,14 @@ The application contains the following routes:
 
 | Route | Purpose |
 |---|---|
-| `/` | Redirects to Dashboard |
-| `/dashboard` | Dashboard statistics |
-| `/students` | Student listing |
-| `/students/add` | Add student |
-| `/students/:id` | Student details |
-| `/students/:id/edit` | Edit student |
+| `/` | Redirects to `/login` |
+| `/login` | Login page |
+| `/register` | Register page |
+| `/dashboard` | Protected dashboard statistics |
+| `/students` | Protected student listing |
+| `/students/add` | Protected add student |
+| `/students/:id` | Protected student details |
+| `/students/:id/edit` | Protected edit student |
 
 ---
 
@@ -294,16 +359,20 @@ The application contains the following routes:
 
 This project does not use a backend database.
 
-Student data is stored in the browser using:
+Data is stored in the browser using `localStorage`.
+
+### Students
+
+Student data is stored under the key:
 
 ```text
-localStorage
+student-management-students
 ```
 
-The localStorage logic is centralized inside:
+The student logic is centralized inside:
 
 ```text
-src/services/studentService.ts
+src/services/students_services.ts
 ```
 
 Components do not directly access localStorage.
@@ -313,15 +382,47 @@ The service layer provides:
 ```text
 getStudents()
 getStudentById()
+emailExists()
 createStudent()
 updateStudent()
 deleteStudent()
-emailExists()
+```
+
+### Authentication
+
+Registered users are stored under the key:
+
+```text
+registeredUsers
+```
+
+The currently authenticated user is stored under the key:
+
+```text
+authenticatedUser
+```
+
+The authentication logic is centralized inside:
+
+```text
+src/services/auth_services.ts
+```
+
+The service layer provides:
+
+```text
+register()
+login()
+logout()
+getCurrentUser()
+isAuthenticated()
 ```
 
 ---
 
-## Data Model
+## Data Models
+
+### Student
 
 Each student contains:
 
@@ -356,41 +457,58 @@ Score is represented as a percentage from:
 0 - 100
 ```
 
+### User
+
+Each registered user contains:
+
+```text
+id
+username
+email
+password
+```
+
+### AuthUser
+
+The authenticated user exposed to the application is a subset of the registered user:
+
+```text
+id
+username
+email
+```
+
 ---
 
 ## Getting Started
 
-### 1. Clone the repository
+### 1. Navigate to the project directory
 
 ```bash
-git clone <your-repository-url>
+cd sdma
 ```
 
-### 2. Open the project
-
-```bash
-cd student-management-dashboard
-```
-
-### 3. Install dependencies
+### 2. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 4. Start the development server
+### 3. Start the development server
 
 ```bash
 npm run dev
 ```
 
-### 5. Open the application
+### 4. Open the application
 
 Open:
 
 ```text
 http://localhost:3000
 ```
+
+The app redirects to the login page. Create an account or log in to access the dashboard.
 
 ---
 
@@ -412,10 +530,64 @@ npm start
 
 ## Application Flow
 
+### Register
+
+```text
+/register
+      ↓
+Form Submission
+      ↓
+Client-side Validation
+      ↓
+Username + Email Uniqueness Check
+      ↓
+authService.register()
+      ↓
+localStorage (registeredUsers)
+      ↓
+Redirect to /login?registered=true
+```
+
+### Login
+
+```text
+/login
+      ↓
+Form Submission
+      ↓
+authService.login()
+      ↓
+Match Email + Password
+      ↓
+localStorage (authenticatedUser)
+      ↓
+AuthContext login()
+      ↓
+Redirect to /dashboard
+```
+
+### Protected Route
+
+```text
+ProtectedRoute
+      ↓
+is auth loading?
+      ↓
+  yes → Spinner
+      ↓
+  no  → is authenticated?
+      ↓
+  yes → Render page
+      ↓
+  no  → Redirect to /login
+```
+
 ### Add Student
 
 ```text
 /students/add
+      ↓
+ProtectedRoute
       ↓
 Formik
       ↓
@@ -438,6 +610,8 @@ Success Toast
 
 ```text
 /students/:id/edit
+      ↓
+ProtectedRoute
       ↓
 getStudentById()
       ↓
@@ -481,19 +655,21 @@ Refresh Student List
 ## Assumptions
 
 - The application uses localStorage instead of a backend database.
-- Student IDs are generated automatically.
+- Authentication is implemented on the client only; passwords are stored in plain text in localStorage (for demo/assessment purposes only).
+- Student IDs are sequential numbers starting from 1.
 - Student email addresses must be unique.
 - Score values range from 0 to 100.
 - Phone numbers must contain exactly 10 digits.
 - Student status can be Active, Completed or Inactive.
 - Seed student data is provided when localStorage has not been initialized.
-- The current application user is represented as `Admin`.
-- No authentication system is implemented.
+- Usernames and emails must be unique during registration.
 - No backend API is required for the current implementation.
 
 ---
 
 ## Validation Rules
+
+### Student Form
 
 | Field | Rule |
 |---|---|
@@ -507,15 +683,59 @@ Refresh Student List
 | Start Date | Required |
 | Trainer | Required |
 | Experience | Required, cannot be negative |
-| Status | Required |
+| Status | Required, must be Active, Completed or Inactive |
 | Score | Required, 0-100 |
 | Pending Assignments | Required, cannot be negative |
+
+### Register Form
+
+| Field | Rule |
+|---|---|
+| Username | Required, unique |
+| Email | Required, unique |
+| Password | Required, at least 6 characters |
+| Confirm Password | Required, must match password |
+
+### Login Form
+
+| Field | Rule |
+|---|---|
+| Email | Required |
+| Password | Required |
 
 ---
 
 ## Testing Checklist
 
 Before considering the application complete, verify:
+
+### Authentication
+
+- [ ] Register page loads
+- [ ] Register validation works
+- [ ] Password length validation works
+- [ ] Password match validation works
+- [ ] Duplicate username is rejected
+- [ ] Duplicate email is rejected
+- [ ] Account is created successfully
+- [ ] User is redirected to `/login?registered=true`
+- [ ] Login page loads
+- [ ] Login validation works
+- [ ] Invalid credentials show an error
+- [ ] Valid credentials log the user in
+- [ ] User is redirected to `/dashboard`
+- [ ] Header shows the logged-in username
+- [ ] Logout works
+- [ ] Logged-out users are redirected to `/login`
+
+### Protected Routes
+
+- [ ] Unauthenticated users are redirected to `/login`
+- [ ] Authenticated users can access `/dashboard`
+- [ ] Authenticated users can access `/students`
+- [ ] Authenticated users can access `/students/add`
+- [ ] Authenticated users can access `/students/:id`
+- [ ] Authenticated users can access `/students/:id/edit`
 
 ### Dashboard
 
@@ -532,9 +752,6 @@ Before considering the application complete, verify:
 - [ ] DataGrid displays students
 - [ ] Sorting works
 - [ ] Pagination works
-- [ ] Search/filtering works
-- [ ] Course filtering works
-- [ ] Status filtering works
 
 ### Add Student
 
@@ -564,7 +781,7 @@ Before considering the application complete, verify:
 - [ ] Existing values are pre-filled
 - [ ] Stepper works
 - [ ] Validation works
-- [ ] Email uniqueness works
+- [ ] Email uniqueness works (excluding the current student)
 - [ ] Changes are saved
 - [ ] Success toast appears
 - [ ] User is redirected to `/students`
@@ -607,12 +824,12 @@ Then commit the final changes:
 
 ```bash
 git add .
-git commit -m "Complete student management dashboard"
+git commit -m "Complete student management dashboard with authentication"
 git push
 ```
 
 ---
 
 ## Author
-
+Shrey Varma
 Student Management Dashboard Assessment Project
