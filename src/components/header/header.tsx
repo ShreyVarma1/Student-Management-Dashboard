@@ -10,13 +10,9 @@ import {
 
 import Link from "next/link";
 
-import {
-  useRouter,
-} from "next/navigation";
+import { useRouter } from "next/navigation";
 
-import {
-  useAuth,
-} from "../../context/auth_context";
+import { useAuth } from "../../context/auth_context";
 
 export default function Header() {
   const router = useRouter();
@@ -29,7 +25,6 @@ export default function Header() {
 
   const handleLogout = () => {
     logout();
-
     router.push("/login");
   };
 
@@ -101,6 +96,8 @@ export default function Header() {
               flexWrap: "wrap",
             }}
           >
+            {/* DASHBOARD */}
+
             <Button
               component={Link}
               href="/dashboard"
@@ -108,6 +105,8 @@ export default function Header() {
             >
               Dashboard
             </Button>
+
+            {/* STUDENTS */}
 
             <Button
               component={Link}
@@ -117,12 +116,27 @@ export default function Header() {
               Students
             </Button>
 
+            {/* TRAINERS */}
+
             <Button
               component={Link}
               href="/trainers"
-              color="inherit">
+              color="inherit"
+            >
               Trainers
             </Button>
+
+            {/* COURSES */}
+
+            <Button
+              component={Link}
+              href="/courses"
+              color="inherit"
+            >
+              Courses
+            </Button>
+
+            {/* ADD STUDENT */}
 
             <Button
               component={Link}
@@ -131,6 +145,8 @@ export default function Header() {
             >
               Add Student
             </Button>
+
+            {/* USERNAME */}
 
             {user && (
               <Typography
@@ -143,6 +159,8 @@ export default function Header() {
                 {user.username}
               </Typography>
             )}
+
+            {/* LOGOUT */}
 
             <Button
               color="inherit"

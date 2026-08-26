@@ -18,6 +18,8 @@ import {
 
 import "react-toastify/dist/ReactToastify.css";
 
+import ThemeRegistry from "../theme_registry";
+
 export const metadata: Metadata = {
   title: "Student Management Dashboard",
   description:
@@ -32,25 +34,27 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AuthProvider>
-          <AppProvider>
-            <Header />
+        <ThemeRegistry>
+          <AuthProvider>
+            <AppProvider>
+              <Header />
 
-            <main
-              style={{
-                paddingTop: "80px",
-                minHeight: "100vh",
-              }}
-            >
-              {children}
-            </main>
+              <main
+                style={{
+                  paddingTop: "80px",
+                  minHeight: "100vh",
+                }}
+              >
+                {children}
+              </main>
 
-            <ToastContainer
-              position="top-right"
-              autoClose={3000}
-            />
-          </AppProvider>
-        </AuthProvider>
+              <ToastContainer
+                position="top-right"
+                autoClose={3000}
+              />
+            </AppProvider>
+          </AuthProvider>
+        </ThemeRegistry>
       </body>
     </html>
   );
