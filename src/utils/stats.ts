@@ -1,7 +1,4 @@
-import type {
-  Student,
-} from "../types/students";
-
+import type { Student,} from "../types/students";
 export function getStudentStats(
   students: Student[]
 ) {

@@ -119,6 +119,13 @@ export default function Header() {
 
             <Button
               component={Link}
+              href="/trainers"
+              color="inherit">
+              Trainers
+            </Button>
+
+            <Button
+              component={Link}
               href="/students/add"
               color="inherit"
             >
