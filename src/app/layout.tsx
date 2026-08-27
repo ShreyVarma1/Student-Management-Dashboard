@@ -1,23 +1,10 @@
 import type { Metadata } from "next";
-
 import "./globals.css";
-
 import Header from "../components/header/header";
-
-import {
-  AppProvider,
-} from "../context/context";
-
-import {
-  AuthProvider,
-} from "../context/auth_context";
-
-import {
-  ToastContainer,
-} from "react-toastify";
-
+import { AppProvider,} from "../context/context";
+import {AuthProvider,} from "../context/auth_context";
+import {ToastContainer,} from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
 import ThemeRegistry from "../theme_registry";
 
 export const metadata: Metadata = {
