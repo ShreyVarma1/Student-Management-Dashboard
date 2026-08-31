@@ -214,7 +214,7 @@ export default function CoursesPage() {
   // --------------------------------
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute allowedRoles={["admin"]}>
       <Box
         sx={{
           padding: {

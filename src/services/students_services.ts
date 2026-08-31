@@ -1,7 +1,5 @@
-import type {
-  Student,
-  StudentInput,
-} from "../types/students";
+import type { Student, StudentInput, } from "../types/students";
+import { authService } from "./auth_services";
 
 const STORAGE_KEY =
   "student-management-students";
@@ -109,7 +107,18 @@ export const studentService = {
     return readStudents().find(
       (student) => student.id === id
     );
-  },
+  },async getStudentByEmail(
+  email: string
+): Promise<Student | undefined> {
+  const normalizedEmail =
+    email.trim().toLowerCase();
+
+  return readStudents().find(
+    (student) =>
+      student.email.trim().toLowerCase() ===
+      normalizedEmail
+  );
+},
 
   // =========================================
   // CHECK EMAIL
@@ -259,28 +268,67 @@ export const studentService = {
   // DELETE STUDENT
   // =========================================
   async deleteStudent(
-    id: number
-  ): Promise<void> {
-    const students = readStudents();
+  id: number
+): Promise<void> {
+  const students = readStudents();
 
-    const exists =
-      students.some(
-        (student) =>
-          student.id === id
-      );
+  const student = students.find(
+    (item) => item.id === id
+  );
 
-    if (!exists) {
-      throw new Error(
-        "Student not found."
-      );
-    }
+  if (!student) {
+    throw new Error(
+      "Student not found."
+    );
+  }
 
-    const updated =
-      students.filter(
-        (student) =>
-          student.id !== id
-      );
+  /*
+   * -----------------------------------------
+   * DEACTIVATE LOGIN ACCOUNT
+   * -----------------------------------------
+   *
+   * Before removing the Student record,
+   * find the corresponding student account
+   * using the student's email.
+   */
+  const accountResult =
+    authService.deactivateStudentAccount(
+      student.email
+    );
 
-    saveStudents(updated);
-  },
-};
+  /*
+   * We don't throw an error if an account
+   * doesn't exist.
+   *
+   * Why?
+   *
+   * Existing students in your project may
+   * have been created before student accounts
+   * existed.
+   *
+   * Their Student record should still be
+   * deletable.
+   */
+  if (
+    !accountResult.success &&
+    !accountResult.message.includes(
+      "No student account found"
+    )
+  ) {
+    throw new Error(
+      accountResult.message
+    );
+  }
+
+  /*
+   * -----------------------------------------
+   * DELETE STUDENT RECORD
+   * -----------------------------------------
+   */
+
+  const updated = students.filter(
+    (item) => item.id !== id
+  );
+
+  saveStudents(updated);
+},}

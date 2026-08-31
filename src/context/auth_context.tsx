@@ -5,22 +5,42 @@ import {
   useContext,
   useEffect,
   useState,
+  type ReactNode,
 } from "react";
-
-import type {
-  AuthUser,
-} from "../types/auth";
 
 import {
   authService,
 } from "../services/auth_services";
 
+import type {
+  AuthUser,
+  LoginInput,
+  RegisterInput,
+} from "../types/auth";
+
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
-  isAuthenticated: boolean;
-  login: (user: AuthUser) => void;
+
+  login: (
+    input: LoginInput
+  ) => {
+    success: boolean;
+    message: string;
+    user?: AuthUser;
+  };
+
+  register: (
+    input: RegisterInput
+  ) => {
+    success: boolean;
+    message: string;
+    user?: AuthUser;
+  };
+
   logout: () => void;
+
+  isAuthenticated: boolean;
 }
 
 const AuthContext =
@@ -28,11 +48,13 @@ const AuthContext =
     undefined
   );
 
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
 export function AuthProvider({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+}: AuthProviderProps) {
   const [user, setUser] =
     useState<AuthUser | null>(null);
 
@@ -47,12 +69,29 @@ export function AuthProvider({
     setLoading(false);
   }, []);
 
-  const login = (loggedInUser: AuthUser) => {
-    setUser(loggedInUser);
+  const login = (input: LoginInput) => {
+    const result =
+      authService.login(input);
+
+    if (result.success && result.user) {
+      setUser(result.user);
+    }
+
+    return result;
+  };
+
+  const register = (
+    input: RegisterInput
+  ) => {
+    const result =
+      authService.register(input);
+
+    return result;
   };
 
   const logout = () => {
     authService.logout();
+
     setUser(null);
   };
 
@@ -61,9 +100,10 @@ export function AuthProvider({
       value={{
         user,
         loading,
-        isAuthenticated: user !== null,
         login,
+        register,
         logout,
+        isAuthenticated: user !== null,
       }}
     >
       {children}

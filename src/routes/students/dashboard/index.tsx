@@ -6,12 +6,20 @@ import {
 } from "@mui/material";
 
 import ProtectedRoute from
-  "../../components/route/route";
+  "../../../components/route/route";
 
-export default function DashboardPage() {
+import {
+  useAuth,
+} from "../../../context/auth_context";
+
+export default function StudentDashboardPage() {
+  const {
+    user,
+  } = useAuth();
+
   return (
     <ProtectedRoute
-      allowedRoles={["admin"]}
+      allowedRoles={["student"]}
     >
       <Box
         sx={{
@@ -28,13 +36,13 @@ export default function DashboardPage() {
             marginBottom: 2,
           }}
         >
-          Admin Dashboard
+          Student Dashboard
         </Typography>
 
         <Typography
           color="text.secondary"
         >
-          Welcome to the Admin Dashboard.
+          Welcome, {user?.username}.
         </Typography>
       </Box>
     </ProtectedRoute>

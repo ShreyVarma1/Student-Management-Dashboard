@@ -2,14 +2,13 @@
 
 import {
   AppBar,
-  Toolbar,
-  Typography,
   Box,
   Button,
+  Toolbar,
+  Typography,
 } from "@mui/material";
 
 import Link from "next/link";
-
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "../../context/auth_context";
@@ -28,6 +27,11 @@ export default function Header() {
     router.push("/login");
   };
 
+  const homeRoute =
+    user?.role === "student"
+      ? "/student"
+      : "/dashboard";
+
   return (
     <AppBar
       position="fixed"
@@ -43,14 +47,14 @@ export default function Header() {
           gap: 2,
         }}
       >
-        {/* LOGO / TITLE */}
+        {/* LOGO */}
 
         <Typography
           variant="h6"
           component={Link}
           href={
             isAuthenticated
-              ? "/dashboard"
+              ? homeRoute
               : "/login"
           }
           sx={{
@@ -62,7 +66,7 @@ export default function Header() {
           Student Management
         </Typography>
 
-        {/* RIGHT SIDE */}
+        {/* NOT LOGGED IN */}
 
         {!isAuthenticated ? (
           <Box
@@ -92,71 +96,24 @@ export default function Header() {
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: 1,
+              gap: 2,
               flexWrap: "wrap",
             }}
           >
-            {/* DASHBOARD */}
-
-            <Button
-              component={Link}
-              href="/dashboard"
-              color="inherit"
-            >
-              Dashboard
-            </Button>
-
-            {/* STUDENTS */}
-
-            <Button
-              component={Link}
-              href="/students"
-              color="inherit"
-            >
-              Students
-            </Button>
-
-            {/* TRAINERS */}
-
-            <Button
-              component={Link}
-              href="/trainers"
-              color="inherit"
-            >
-              Trainers
-            </Button>
-
-            {/* COURSES */}
-
-            <Button
-              component={Link}
-              href="/courses"
-              color="inherit"
-            >
-              Courses
-            </Button>
-
-            {/* ADD STUDENT */}
-
-            <Button
-              component={Link}
-              href="/students/add"
-              color="inherit"
-            >
-              Add Student
-            </Button>
-
-            {/* USERNAME */}
+            {/* USER */}
 
             {user && (
               <Typography
                 variant="body2"
                 sx={{
-                  marginLeft: 1,
                   fontWeight: 600,
                 }}
               >
                 {user.username}
+                {" • "}
+                {user.role === "admin"
+                  ? "Admin"
+                  : "Student"}
               </Typography>
             )}
 

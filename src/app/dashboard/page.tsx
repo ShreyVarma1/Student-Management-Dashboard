@@ -1,5 +1,7 @@
-import DashboardRoute from "@/src/routes/dashboard";
+import DashboardPage from "../../routes/dashboard";
 
-export default function DashboardPage() {
-  return <DashboardRoute/>;
+export default function Dashboard() {
+  return (
+    <DashboardPage />
+  );
 }

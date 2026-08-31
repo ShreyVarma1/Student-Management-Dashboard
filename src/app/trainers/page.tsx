@@ -1,5 +1,7 @@
-import TrainersRoute from "@/src/routes/trainers";
+import TrainersPage from "../../routes/trainers";
 
-export default function TrainersPage() {
-  return <TrainersRoute />;
+export default function Trainers() {
+  return (
+    <TrainersPage />
+  );
 }

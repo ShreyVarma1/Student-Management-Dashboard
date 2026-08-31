@@ -1,47 +1,48 @@
 "use client";
 
 import {
-  FormEvent,
-  useEffect,
   useState,
 } from "react";
 
 import {
   useRouter,
-  useSearchParams,
 } from "next/navigation";
 
-import Link from "next/link";
-
 import {
-  Alert,
   Box,
   Button,
   Card,
   CardContent,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Radio,
+  RadioGroup,
   TextField,
   Typography,
 } from "@mui/material";
 
-import LoginIcon from
-  "@mui/icons-material/Login";
-
 import {
-  authService,
-} from "../../services/auth_services";
+  toast,
+} from "react-toastify";
 
 import {
   useAuth,
 } from "../../context/auth_context";
 
+import type {
+  UserRole,
+} from "../../types/auth";
+
 export default function LoginPage() {
   const router = useRouter();
 
-  const searchParams =
-    useSearchParams();
+  const {
+    login,
+  } = useAuth();
 
-  const { login, isAuthenticated } =
-    useAuth();
+  const [role, setRole] =
+    useState<UserRole>("student");
 
   const [email, setEmail] =
     useState("");
@@ -49,80 +50,66 @@ export default function LoginPage() {
   const [password, setPassword] =
     useState("");
 
-  const [error, setError] =
-    useState("");
-
-  const [success, setSuccess] =
-    useState("");
-
   const [loading, setLoading] =
     useState(false);
 
-  useEffect(() => {
-    if (searchParams.get("registered")) {
-      setSuccess(
-        "Account created successfully. Please login."
-      );
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.replace("/dashboard");
-    }
-  }, [
-    isAuthenticated,
-    router,
-  ]);
-
   const handleSubmit = (
-    event: FormEvent<HTMLFormElement>
+    event: React.FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
 
-    setError("");
-    setSuccess("");
-
     if (!email.trim()) {
-      setError(
-        "Email is required."
+      toast.error(
+        "Please enter your email."
       );
+
       return;
     }
 
     if (!password) {
-      setError(
-        "Password is required."
+      toast.error(
+        "Please enter your password."
       );
+
       return;
     }
 
     setLoading(true);
 
-    const result =
-      authService.login({
-        email,
-        password,
-      });
-
-    setLoading(false);
+    const result = login({
+      email,
+      password,
+      role,
+    });
 
     if (!result.success) {
-      setError(result.message);
+      toast.error(result.message);
+
+      setLoading(false);
+
       return;
     }
 
-    if (result.user) {
-      login(result.user);
+    toast.success(
+      "Login successful!"
+    );
+
+    /**
+     * Redirect according to role.
+     */
+    if (result.user?.role === "admin") {
       router.push("/dashboard");
+    } else {
+      router.push(
+        "/student/dashboard"
+      );
     }
   };
 
   return (
     <Box
       sx={{
-        minHeight:
-          "calc(100vh - 80px)",
+        minHeight: "100vh",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -135,56 +122,68 @@ export default function LoginPage() {
           maxWidth: 450,
         }}
       >
-        <CardContent sx={{ padding: 4 }}>
-          <Box
+        <CardContent
+          sx={{
+            padding: 4,
+          }}
+        >
+          <Typography
+            variant="h4"
             sx={{
+              fontWeight: 700,
               textAlign: "center",
-              marginBottom: 3,
+              marginBottom: 1,
             }}
           >
-            <LoginIcon
-              sx={{
-                fontSize: 45,
-                marginBottom: 1,
-              }}
-            />
+            Login
+          </Typography>
 
-            <Typography
-              variant="h4"
-              sx={{ fontWeight: 700 }}
-            >
-              Login
-            </Typography>
+          <Typography
+            color="text.secondary"
+            sx={{
+              textAlign: "center",
+              marginBottom: 4,
+            }}
+          >
+            Select your role and login
+          </Typography>
 
-            <Typography
-              color="text.secondary"
-            >
-              Login to your admin account
-            </Typography>
-          </Box>
-
-          {success && (
-            <Alert
-              severity="success"
-              sx={{ marginBottom: 2 }}
-            >
-              {success}
-            </Alert>
-          )}
-
-          {error && (
-            <Alert
-              severity="error"
-              sx={{ marginBottom: 2 }}
-            >
-              {error}
-            </Alert>
-          )}
-
-          <Box
-            component="form"
+          <form
             onSubmit={handleSubmit}
           >
+            <FormControl
+              sx={{
+                marginBottom: 3,
+              }}
+            >
+              <FormLabel>
+                Login as
+              </FormLabel>
+
+              <RadioGroup
+                row
+                value={role}
+                onChange={(event) =>
+                  setRole(
+                    event.target
+                      .value as UserRole
+                  )
+                }
+              >
+                <FormControlLabel
+                  value="student"
+                  control={<Radio />}
+                  label="Student"
+                />
+
+                <FormControlLabel
+                  value="admin"
+                  control={<Radio />}
+                  label="Admin"
+                />
+              </RadioGroup>
+            </FormControl>
+
             <TextField
               fullWidth
               label="Email"
@@ -195,8 +194,9 @@ export default function LoginPage() {
                   event.target.value
                 )
               }
-              margin="normal"
-              required
+              sx={{
+                marginBottom: 2,
+              }}
             />
 
             <TextField
@@ -209,41 +209,43 @@ export default function LoginPage() {
                   event.target.value
                 )
               }
-              margin="normal"
-              required
+              sx={{
+                marginBottom: 3,
+              }}
             />
 
             <Button
-              type="submit"
               fullWidth
+              type="submit"
               variant="contained"
-              size="large"
               disabled={loading}
               sx={{
-                marginTop: 3,
+                paddingY: 1.5,
               }}
             >
               {loading
                 ? "Logging in..."
                 : "Login"}
             </Button>
+          </form>
 
-            <Box
-              sx={{
-                textAlign: "center",
-                marginTop: 2,
-              }}
+          <Typography
+            sx={{
+              textAlign: "center",
+              marginTop: 3,
+            }}
+          >
+            Don't have an account?{" "}
+            <Button
+              onClick={() =>
+                router.push(
+                  "/register"
+                )
+              }
             >
-              <Typography
-                variant="body2"
-              >
-                Don't have an account?{" "}
-                <Link href="/register">
-                  Create Account
-                </Link>
-              </Typography>
-            </Box>
-          </Box>
+              Register
+            </Button>
+          </Typography>
         </CardContent>
       </Card>
     </Box>

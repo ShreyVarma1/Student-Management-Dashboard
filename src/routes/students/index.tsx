@@ -217,7 +217,7 @@ export default function StudentsPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={["admin"]}>
         <Loading />
       </ProtectedRoute>
     );

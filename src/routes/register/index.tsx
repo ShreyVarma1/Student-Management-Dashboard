@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  FormEvent,
   useState,
 } from "react";
 
@@ -9,27 +8,41 @@ import {
   useRouter,
 } from "next/navigation";
 
-import Link from "next/link";
-
 import {
-  Alert,
   Box,
   Button,
   Card,
   CardContent,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Radio,
+  RadioGroup,
   TextField,
   Typography,
 } from "@mui/material";
 
-import PersonAddIcon from
-  "@mui/icons-material/PersonAdd";
+import {
+  toast,
+} from "react-toastify";
 
 import {
-  authService,
-} from "../../services/auth_services";
+  useAuth,
+} from "../../context/auth_context";
+
+import type {
+  UserRole,
+} from "../../types/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
+
+  const {
+    register,
+  } = useAuth();
+
+  const [role, setRole] =
+    useState<UserRole>("student");
 
   const [username, setUsername] =
     useState("");
@@ -43,71 +56,81 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] =
     useState("");
 
-  const [error, setError] =
-    useState("");
-
   const [loading, setLoading] =
     useState(false);
 
   const handleSubmit = (
-    event: FormEvent<HTMLFormElement>
+    event: React.FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
 
-    setError("");
-
     if (!username.trim()) {
-      setError(
-        "Username is required."
+      toast.error(
+        "Please enter a username."
       );
+
       return;
     }
 
     if (!email.trim()) {
-      setError(
-        "Email is required."
+      toast.error(
+        "Please enter an email."
       );
+
       return;
     }
 
-    if (password.length < 6) {
-      setError(
-        "Password must be at least 6 characters."
+    if (!password) {
+      toast.error(
+        "Please enter a password."
       );
+
       return;
     }
 
     if (password !== confirmPassword) {
-      setError(
+      toast.error(
         "Passwords do not match."
       );
+
       return;
     }
 
     setLoading(true);
 
-    const result =
-      authService.register({
-        username,
-        email,
-        password,
-      });
-
-    setLoading(false);
+    const result = register({
+      username,
+      email,
+      password,
+      role,
+    });
 
     if (!result.success) {
-      setError(result.message);
+      toast.error(result.message);
+
+      setLoading(false);
+
       return;
     }
 
-    router.push("/login?registered=true");
+    toast.success(
+      "Account created successfully!"
+    );
+
+    /**
+     * Registration does NOT automatically log
+     * the user in.
+     *
+     * They go back to Login and select the
+     * same role there.
+     */
+    router.push("/login");
   };
 
   return (
     <Box
       sx={{
-        minHeight:
-          "calc(100vh - 80px)",
+        minHeight: "100vh",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -117,50 +140,71 @@ export default function RegisterPage() {
       <Card
         sx={{
           width: "100%",
-          maxWidth: 450,
+          maxWidth: 500,
         }}
       >
-        <CardContent sx={{ padding: 4 }}>
-          <Box
+        <CardContent
+          sx={{
+            padding: 4,
+          }}
+        >
+          <Typography
+            variant="h4"
             sx={{
+              fontWeight: 700,
               textAlign: "center",
-              marginBottom: 3,
+              marginBottom: 1,
             }}
           >
-            <PersonAddIcon
-              sx={{
-                fontSize: 45,
-                marginBottom: 1,
-              }}
-            />
+            Create Account
+          </Typography>
 
-            <Typography
-              variant="h4"
-              sx={{ fontWeight: 700 }}
-            >
-              Create Account
-            </Typography>
+          <Typography
+            color="text.secondary"
+            sx={{
+              textAlign: "center",
+              marginBottom: 4,
+            }}
+          >
+            Select your role and register
+          </Typography>
 
-            <Typography
-              color="text.secondary"
-            >
-              Create your admin account
-            </Typography>
-          </Box>
-
-          {error && (
-            <Alert
-              severity="error"
-              sx={{ marginBottom: 2 }}
-            >
-              {error}
-            </Alert>
-          )}
-
-          <Box
-            component="form"
+          <form
             onSubmit={handleSubmit}
           >
+            <FormControl
+              sx={{
+                marginBottom: 3,
+              }}
+            >
+              <FormLabel>
+                Register as
+              </FormLabel>
+
+              <RadioGroup
+                row
+                value={role}
+                onChange={(event) =>
+                  setRole(
+                    event.target
+                      .value as UserRole
+                  )
+                }
+              >
+                <FormControlLabel
+                  value="student"
+                  control={<Radio />}
+                  label="Student"
+                />
+
+                <FormControlLabel
+                  value="admin"
+                  control={<Radio />}
+                  label="Admin"
+                />
+              </RadioGroup>
+            </FormControl>
+
             <TextField
               fullWidth
               label="Username"
@@ -170,8 +214,9 @@ export default function RegisterPage() {
                   event.target.value
                 )
               }
-              margin="normal"
-              required
+              sx={{
+                marginBottom: 2,
+              }}
             />
 
             <TextField
@@ -184,8 +229,9 @@ export default function RegisterPage() {
                   event.target.value
                 )
               }
-              margin="normal"
-              required
+              sx={{
+                marginBottom: 2,
+              }}
             />
 
             <TextField
@@ -198,8 +244,9 @@ export default function RegisterPage() {
                   event.target.value
                 )
               }
-              margin="normal"
-              required
+              sx={{
+                marginBottom: 2,
+              }}
             />
 
             <TextField
@@ -212,41 +259,41 @@ export default function RegisterPage() {
                   event.target.value
                 )
               }
-              margin="normal"
-              required
+              sx={{
+                marginBottom: 3,
+              }}
             />
 
             <Button
-              type="submit"
               fullWidth
+              type="submit"
               variant="contained"
-              size="large"
               disabled={loading}
               sx={{
-                marginTop: 3,
+                paddingY: 1.5,
               }}
             >
               {loading
-                ? "Creating..."
+                ? "Creating account..."
                 : "Create Account"}
             </Button>
+          </form>
 
-            <Box
-              sx={{
-                textAlign: "center",
-                marginTop: 2,
-              }}
+          <Typography
+            sx={{
+              textAlign: "center",
+              marginTop: 3,
+            }}
+          >
+            Already have an account?{" "}
+            <Button
+              onClick={() =>
+                router.push("/login")
+              }
             >
-              <Typography
-                variant="body2"
-              >
-                Already have an account?{" "}
-                <Link href="/login">
-                  Login
-                </Link>
-              </Typography>
-            </Box>
-          </Box>
+              Login
+            </Button>
+          </Typography>
         </CardContent>
       </Card>
     </Box>

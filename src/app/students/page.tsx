@@ -1,5 +1,3 @@
-import StudentsRoute from "@/src/routes/students";
+import StudentsPage from "../../routes/students";
 
-export default function StudentPage() {
-  return <StudentsRoute />;
-}
+export default StudentsPage;
