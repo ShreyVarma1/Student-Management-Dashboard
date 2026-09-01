@@ -31,6 +31,7 @@ export const eventSchema = Yup.object({
   type: Yup.string()
     .oneOf(
       [
+        "Event",
         "Holiday",
         "Exam",
         "Workshop",

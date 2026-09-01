@@ -179,6 +179,14 @@ export default function EventForm({
         <MenuItem value="Workshop">
           Workshop
         </MenuItem>
+
+        <MenuItem value="Meeting">
+          Meeting
+        </MenuItem>
+
+        <MenuItem value="Other">
+          Other
+        </MenuItem>
       </TextField>
 
       {formik.status && (

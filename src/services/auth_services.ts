@@ -174,16 +174,14 @@ export const authService = {
     if (!user) {
       return {
         success: false,
-        message:
-          "Invalid email, password, or selected role.",
+        message: "User not found",
       };
     }
 
     if (user.active === false) {
       return {
         success: false,
-        message:
-          "Your account has been deactivated. Please contact the administrator.",
+        message: "User not found",
       };
     }
 

@@ -1,4 +1,5 @@
 export type EventType =
+  | "Event"
   | "Holiday"
   | "Exam"
   | "Workshop"

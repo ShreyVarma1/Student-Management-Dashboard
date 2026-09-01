@@ -1,42 +1,30 @@
 "use client";
 
-import {
-  Box,
-  Typography,
-} from "@mui/material";
-
-import ProtectedRoute from
-  "../../components/route/route";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../../context/auth_context";
 
 export default function DashboardPage() {
-  return (
-    <ProtectedRoute
-      allowedRoles={["admin"]}
-    >
-      <Box
-        sx={{
-          padding: {
-            xs: 2,
-            md: 4,
-          },
-        }}
-      >
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: 700,
-            marginBottom: 2,
-          }}
-        >
-          Admin Dashboard
-        </Typography>
+  const router = useRouter();
+  const { user, loading } = useAuth();
 
-        <Typography
-          color="text.secondary"
-        >
-          Welcome to the Admin Dashboard.
-        </Typography>
-      </Box>
-    </ProtectedRoute>
-  );
+  useEffect(() => {
+    if (loading) return;
+
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+
+    if (user.role === "admin") {
+      router.replace("/admin/dashboard");
+      return;
+    }
+
+    if (user.role === "student") {
+      router.replace("/student/dashboard");
+    }
+  }, [user, loading, router]);
+
+  return null;
 }

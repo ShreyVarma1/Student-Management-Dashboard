@@ -33,12 +33,12 @@ interface NavItem {
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
 
   const handleLogout = () => {
-    authService.logout();
+    logout();
     toast.success("Logged out successfully.");
-    router.push("/login");
+    router.replace("/login");
   };
 
   if (loading) {
